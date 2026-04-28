@@ -1,0 +1,129 @@
+
+<div style="position: relative; width: 100%; padding: 1rem 0;">
+  <h2 class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0);">Superficie 3D con degradado verde-amarillo-rojo. TSS en función de tiempo (eje X, invertido, hasta 6h) e IF (eje Y, 0.5 a 1.0).</h2>
+
+  <div id="plot3d" style="width: 100%; height: 760px;"></div>
+
+  <div style="display: flex; gap: 12px; justify-content: center; margin-top: 2.5rem; flex-wrap: wrap;">
+    <button onclick="setView('default')">Vista por defecto</button>
+    <button onclick="setView('top')">Vista superior</button>
+    <button onclick="setView('side_time')">Frente tiempo</button>
+    <button onclick="setView('side_if')">Frente IF</button>
+  </div>
+
+  <div style="text-align: center; margin-top: 10px; font-size: 12px; color: var(--color-text-tertiary);">
+    Arrastra para rotar &nbsp;·&nbsp; Rueda del ratón para zoom &nbsp;·&nbsp; Pasa el cursor sobre la superficie para ver tiempo, IF y TSS
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script>
+(function() {
+  const timeValues = [];
+  for (let t = 0.5; t <= 6.001; t += 0.5) timeValues.push(parseFloat(t.toFixed(1)));
+
+  const ifValues = [];
+  for (let i = 5; i <= 10; i++) ifValues.push(parseFloat((i * 0.1).toFixed(1)));
+
+  const z = ifValues.map(ifV => timeValues.map(t => parseFloat((t * ifV * ifV * 100).toFixed(1))));
+
+  const trafficRamp = [
+    [0.00, '#1D9E75'],
+    [0.25, '#97C459'],
+    [0.50, '#FAC775'],
+    [0.75, '#EF9F27'],
+    [1.00, '#E24B4A']
+  ];
+
+  const surface = {
+    type: 'surface',
+    x: timeValues,
+    y: ifValues,
+    z: z,
+    colorscale: trafficRamp,
+    showscale: true,
+    colorbar: {
+      title: { text: 'TSS', font: { size: 13, color: '#888780' } },
+      tickfont: { size: 12, color: '#888780' },
+      thickness: 16,
+      len: 0.7
+    },
+    contours: {
+      z: {
+        show: true,
+        usecolormap: true,
+        highlightcolor: '#444441',
+        project: { z: true }
+      }
+    },
+    hovertemplate:
+      '<b>Tiempo:</b> %{x:.1f} h<br>' +
+      '<b>IF:</b> %{y:.1f}<br>' +
+      '<b>TSS:</b> %{z:.1f}<extra></extra>'
+  };
+
+  const refMarkers = {
+    type: 'scatter3d',
+    mode: 'markers+text',
+    x: [1.0, 1.0],
+    y: [1.0, 0.6],
+    z: [100, 36],
+    marker: { size: 7, color: '#444441', symbol: 'circle', line: { color: '#FFFFFF', width: 1 } },
+    text: ['1h, IF=1 → 100', '1h, IF=0.6 → 36'],
+    textposition: 'top center',
+    textfont: { size: 12, color: '#444441' },
+    hoverinfo: 'skip',
+    showlegend: false
+  };
+
+  const layout = {
+    autosize: true,
+    margin: { l: 0, r: 0, t: 10, b: 0 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    scene: {
+      xaxis: {
+        title: { text: 'Tiempo (h)', font: { size: 14, color: '#888780' } },
+        tickfont: { size: 12, color: '#888780' },
+        gridcolor: 'rgba(136,135,128,0.25)',
+        zerolinecolor: 'rgba(136,135,128,0.4)',
+        backgroundcolor: 'rgba(0,0,0,0)',
+        autorange: 'reversed'
+      },
+      yaxis: {
+        title: { text: 'IF', font: { size: 14, color: '#888780' } },
+        tickfont: { size: 12, color: '#888780' },
+        gridcolor: 'rgba(136,135,128,0.25)',
+        zerolinecolor: 'rgba(136,135,128,0.4)',
+        backgroundcolor: 'rgba(0,0,0,0)'
+      },
+      zaxis: {
+        title: { text: 'TSS', font: { size: 14, color: '#888780' } },
+        tickfont: { size: 12, color: '#888780' },
+        gridcolor: 'rgba(136,135,128,0.25)',
+        zerolinecolor: 'rgba(136,135,128,0.4)',
+        backgroundcolor: 'rgba(0,0,0,0)'
+      },
+      camera: { eye: { x: 1.6, y: -1.6, z: 1.0 } },
+      aspectmode: 'cube'
+    }
+  };
+
+  const config = {
+    responsive: true,
+    displayModeBar: false
+  };
+
+  Plotly.newPlot('plot3d', [surface, refMarkers], layout, config);
+
+  window.setView = function(name) {
+    const cams = {
+      default:   { eye: { x: 1.6,  y: -1.6, z: 1.0 } },
+      top:       { eye: { x: 0.0,  y: 0.0,  z: 2.4 } },
+      side_time: { eye: { x: 0.0,  y: -2.4, z: 0.4 } },
+      side_if:   { eye: { x: 2.4,  y: 0.0,  z: 0.4 } }
+    };
+    Plotly.relayout('plot3d', { 'scene.camera': cams[name] });
+  };
+})();
+</script>
